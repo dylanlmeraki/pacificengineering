@@ -1,0 +1,379 @@
+
+import React, { useState, useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { createPageUrl } from "@/utils";
+import { getPortalType, isInternalPortal, isClientPortal } from "@/components/utils/subdomainHelpers";
+import { Menu, X, Phone, Mail, MapPin, ChevronDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import FloatingButtons from "@/components/FloatingButtons";
+import { base44 } from "@/api/base44Client";
+import InternalLayout from "@/components/internal/InternalLayout";
+
+export default function Layout({ children, currentPageName }) {
+  const portalType = getPortalType();
+  
+  // If on internal subdomain, use InternalLayout
+  if (isInternalPortal()) {
+    return <InternalLayout>{children}</InternalLayout>;
+  }
+  
+  // If on client subdomain, redirect to ClientPortal page
+  if (isClientPortal()) {
+    if (typeof window !== 'undefined' && window.location.pathname !== createPageUrl("ClientPortal")) {
+      window.location.href = createPageUrl("ClientPortal");
+      return null;
+    }
+  }
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [servicesDropdownOpen, setServicesDropdownOpen] = useState(false);
+  const [aboutDropdownOpen, setAboutDropdownOpen] = useState(false);
+  const [user, setUser] = useState(null);
+  const location = useLocation();
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const currentUser = await base44.auth.me();
+        setUser(currentUser);
+      } catch (error) {
+        setUser(null);
+      }
+    };
+    fetchUser();
+  }, []);
+
+  const servicesItems = [
+    { name: "Stormwater Planning", path: createPageUrl("Services") },
+    { name: "Inspections & Testing", path: createPageUrl("InspectionsTesting") },
+    { name: "Special Inspections", path: createPageUrl("SpecialInspections") },
+    { name: "Engineering Consulting", path: createPageUrl("StructuralEngineering") },
+    { name: "Construction Services", path: createPageUrl("Construction") }
+  ];
+
+  const aboutItems = [
+    { name: "About Us", path: createPageUrl("About") },
+    { name: "Previous Work", path: createPageUrl("PreviousWork") },
+    { name: "Project Gallery", path: createPageUrl("ProjectGallery") },
+    { name: "Blog", path: createPageUrl("Blog") }
+  ];
+
+  return (
+    <div className="min-h-screen bg-white">
+      {/* Header */}
+      <header className="fixed top-0 left-0 right-0 z-40 bg-gradient-to-r from-blue-600 to-cyan-600 shadow-lg">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="flex items-center justify-between h-20">
+            {/* Logo */}
+            <Link to={createPageUrl("Home")} className="flex items-center gap-3 group">
+              <img
+                src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68eb69c51ce08e4c9fdca015/fbd78afc1_Asset2-100.jpg"
+                alt="Pacific Engineering Logo"
+                className="rounded-[10px] h-14 w-14 object-contain group-hover:scale-110 transition-transform"
+              />
+              <div>
+                <div className="font-bold text-white text-xl">Pacific Engineering & Construction Inc.</div>
+                <div className="text-s text-cyan-100">Consulting Engineers & Contractors</div>
+              </div>
+            </Link>
+
+            {/* Desktop Navigation */}
+            <nav className="hidden md:flex items-center gap-2 h-full">
+              <Link
+                to={createPageUrl("Home")}
+                className="font-medium text-white transition-all flex items-center h-full px-4 rounded-lg hover:bg-cyan-500/30 hover:[text-shadow:_0_0_2px_rgb(37_99_235)]"
+              >
+                Home
+              </Link>
+              
+              {/* Services Dropdown */}
+              <div
+                className="relative group h-full flex items-center"
+                onMouseEnter={() => setServicesDropdownOpen(true)}
+                onMouseLeave={() => setServicesDropdownOpen(false)}
+              >
+                <button className="font-medium text-white transition-all flex items-center gap-1 h-full px-4 rounded-lg hover:bg-cyan-500/30 hover:[text-shadow:_0_0_2px_rgb(37_99_235)]">
+                  Services
+                  <ChevronDown className={`w-4 h-4 transition-transform ${servicesDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+                
+                {servicesDropdownOpen && (
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2">
+                    <div className="w-64 bg-white rounded-xl shadow-2xl border border-gray-100 py-3 overflow-hidden">
+                      <Link
+                        to={createPageUrl("ServicesOverview")}
+                        className="block px-6 py-3 text-gray-900 hover:bg-gradient-to-r hover:from-blue-50 hover:to-cyan-50 font-semibold text-base transition-all text-center"
+                      >
+                        Our Services
+                      </Link>
+                      <div className="border-t border-gray-100 my-2 mx-3"></div>
+                      {servicesItems.map((item) => (
+                        <Link
+                          key={item.name}
+                          to={item.path}
+                          className="block px-6 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-cyan-50 hover:text-blue-600 transition-all text-base text-center"
+                        >
+                          {item.name}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* About Dropdown */}
+              <div
+                className="relative group h-full flex items-center"
+                onMouseEnter={() => setAboutDropdownOpen(true)}
+                onMouseLeave={() => setAboutDropdownOpen(false)}
+              >
+                <button className="font-medium text-white transition-all flex items-center gap-1 h-full px-4 rounded-lg hover:bg-cyan-500/30 hover:[text-shadow:_0_0_2px_rgb(37_99_235)]">
+                  About
+                  <ChevronDown className={`w-4 h-4 transition-transform ${aboutDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+                
+                {aboutDropdownOpen && (
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2">
+                    <div className="w-56 bg-white rounded-xl shadow-2xl border border-gray-100 py-3 overflow-hidden">
+                      {aboutItems.map((item) => (
+                        <Link
+                          key={item.name}
+                          to={item.path}
+                          className="block px-6 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-cyan-50 hover:text-blue-600 transition-all font-normal text-base text-center"
+                        >
+                          {item.name}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <Link
+                to={createPageUrl("Contact")}
+                className="font-medium text-white transition-all flex items-center h-full px-4 rounded-lg hover:bg-cyan-500/30 hover:[text-shadow:_0_0_2px_rgb(37_99_235)]"
+              >
+                Contact
+              </Link>
+
+              <Link to={createPageUrl("SWPPPChecker")} className="flex items-center h-full ml-4 px-0.5 py-0.5">
+                <Button className="bg-gradient-to-br from-blue-400 to-cyan-500 text-white border-white hover:bg-blue-800 font-semibold hover:border-white">
+                  Free Consultation
+                </Button>
+              </Link>
+            </nav>
+
+            {/* Mobile Menu Button */}
+            <button
+              className="md:hidden p-2 text-white hover:bg-cyan-500/30 rounded-lg transition-colors"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Menu */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden bg-white border-t border-gray-200">
+            <nav className="px-6 py-4 space-y-3">
+              <Link
+                to={createPageUrl("Home")}
+                className={`block py-2 font-medium transition-colors ${
+                  location.pathname === createPageUrl("Home") ? "text-blue-600" : "text-gray-700 hover:text-blue-600"
+                }`}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Home
+              </Link>
+              
+              <div className="space-y-2">
+                <Link
+                  to={createPageUrl("ServicesOverview")}
+                  className="block py-2 font-semibold text-gray-900 hover:text-blue-600"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Services
+                </Link>
+                <div className="pl-4 space-y-2">
+                  {servicesItems.map((item) => (
+                    <Link
+                      key={item.name}
+                      to={item.path}
+                      className="block py-1.5 text-gray-700 hover:text-blue-600"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      {item.name}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="block py-2 font-semibold text-gray-900">
+                  About
+                </div>
+                <div className="pl-4 space-y-2">
+                  {aboutItems.map((item) => (
+                    <Link
+                      key={item.name}
+                      to={item.path}
+                      className="block py-1.5 text-gray-700 hover:text-blue-600"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      {item.name}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+
+              <Link
+                to={createPageUrl("Contact")}
+                className="block py-2 font-medium text-gray-700 hover:text-blue-600"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Contact
+              </Link>
+
+              <Link to={createPageUrl("SWPPPChecker")} onClick={() => setIsMobileMenuOpen(false)}>
+                <Button className="w-full bg-blue-600 hover:bg-blue-700 mt-2">
+                  Free Consultation
+                </Button>
+              </Link>
+            </nav>
+          </div>
+        )}
+      </header>
+
+      {/* Main Content */}
+      <main className="pt-20">
+        {children}
+      </main>
+
+      {/* Floating Action Buttons */}
+      <FloatingButtons user={user} />
+
+      {/* Footer */}
+      <footer className="bg-gradient-to-br from-gray-900 to-gray-800 text-white">
+        <div className="max-w-7xl mx-auto px-6 py-16">
+          <div className="grid md:grid-cols-4 gap-12 mb-12">
+            {/* Company Info */}
+            <div className="md:col-span-2">
+              <div className="flex items-center gap-3 mb-4">
+                <img
+                  src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68eb69c51ce08e4c9fdca015/fbd78afc1_Asset2-100.jpg"
+                  alt="Pacific Engineering Logo"
+                  className="h-10 w-10 object-contain"
+                />
+                <div>
+                  <div className="font-bold text-xl">Pacific Engineering</div>
+                  <div className="text-sm text-gray-400">Consulting Engineers & Contractors</div>
+                </div>
+              </div>
+              <p className="text-gray-300 leading-relaxed mb-6">
+                Pacific Engineering & Construction Inc. provides full-scale civil and structural engineering, construction consulting, and plan implementation in a vertically integrated business model working on projects of all sizes from residential remodels to public utility and infrastructure projects. Through decades of deep in-field knowledge and network fostering and growth - Pacific Engineering & Construction truly has earned its polished and professional reputation.
+                </p>
+              <div className="flex gap-4">
+                {/* LinkedIn */}
+                <a
+                  href="https://www.linkedin.com/in/a-mark-waldman-814b119/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-blue-600 transition-colors cursor-pointer"
+                >
+                  <span className="text-sm font-bold">in</span>
+                </a>
+                <div className="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-blue-600 transition-colors cursor-pointer">
+                  <span className="text-sm font-bold">f</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Links */}
+            <div>
+              <h3 className="font-bold text-lg mb-4">Quick Links</h3>
+              <ul className="space-y-2">
+                <li>
+                  <Link to={createPageUrl("Home")} className="text-gray-300 hover:text-cyan-400 transition-colors">
+                    Home
+                  </Link>
+                </li>
+                <li>
+                  <Link to={createPageUrl("ServicesOverview")} className="text-gray-300 hover:text-cyan-400 transition-colors">
+                    Services
+                  </Link>
+                </li>
+                <li>
+                  <Link to={createPageUrl("Consultation")} className="text-gray-300 hover:text-cyan-400 transition-colors">
+                    Start a Consultation
+                  </Link>
+                </li>
+                <li>
+                  <Link to={createPageUrl("ProjectGallery")} className="text-gray-300 hover:text-cyan-400 transition-colors">
+                    Project Gallery
+                  </Link>
+                </li>
+                <li>
+                  <Link to={createPageUrl("Blog")} className="text-gray-300 hover:text-cyan-400 transition-colors">
+                    Blog
+                  </Link>
+                </li>
+                <li>
+                  <Link to={createPageUrl("About")} className="text-gray-300 hover:text-cyan-400 transition-colors">
+                    About
+                  </Link>
+                </li>
+                <li>
+                  <Link to={createPageUrl("Contact")} className="text-gray-300 hover:text-cyan-400 transition-colors">
+                    Contact
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            {/* Contact Info */}
+            <div>
+              <h3 className="font-bold text-lg mb-4">Contact Us</h3>
+              <ul className="space-y-3">
+                <li className="flex items-center gap-3 text-gray-300">
+                  <Phone className="w-4 h-4 text-cyan-400" />
+                  <a href="tel:+14154196079" className="hover:text-cyan-400 transition-colors">
+                    (415)-419-6079
+                  </a>
+                </li>
+                <li className="flex items-center gap-3 text-gray-300">
+                  <Mail className="w-4 h-4 text-cyan-400" />
+                  <a href="mailto:dylanl.peci@gmail.com" className="hover:text-cyan-400 transition-colors break-all">
+                    dylanl.peci@gmail.com
+                  </a>
+                </li>
+                <li className="flex items-start gap-3 text-gray-300">
+                  <MapPin className="w-4 h-4 text-cyan-400 mt-1 flex-shrink-0" />
+                  <span>470 3rd St.<br />San Francisco, CA 94107</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="pt-8 border-t border-gray-700">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-400">
+              <p>© 2024 Pacific Engineering. All rights reserved.</p>
+              <div className="flex gap-6">
+                <a href="#" className="hover:text-cyan-400 transition-colors">Privacy Policy</a>
+                <a href="#" className="hover:text-cyan-400 transition-colors">Terms of Service</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}
