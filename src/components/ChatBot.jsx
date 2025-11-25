@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
-import { MessageSquare, X, Send, Phone } from "lucide-react";
+import { MessageSquare, X, Send, Phone, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import clsx from "clsx";
+import { cn } from "@/lib/utils";
 
-const STORAGE_KEY = "peci_chatbot_state_v1";
+const STORAGE_KEY = "peci_chatbot_state_v2";
 const PHONE = "+14154196079";
 const CONSULTATION_PATH = "/SWPPPChecker";
 const CONTACT_PATH = "/Contact";
@@ -20,6 +20,7 @@ const TIMELINE_KEYWORDS = /\b(\b(?:next week|this week|tomorrow|today|asap|withi
 const AGENCY_KEYWORDS = /\b(permit|city|county|baykeeper|water board|sfbru|caltrans|california)\b/i;
 
 function classifyIntent(text) {
+  if (!text) return { intent: "unknown", confidence: 0.5 };
   const t = text.toLowerCase();
   if (URGENCY_KEYWORDS.test(t)) return { intent: "urgent", confidence: 0.99 };
   if (INSPECTION_KEYWORDS.test(t)) return { intent: "inspection", confidence: 0.9 };
@@ -33,6 +34,7 @@ function classifyIntent(text) {
 }
 
 function extractEntities(text) {
+  if (!text) return {};
   const entities = {};
   const loc = text.match(LOCATION_KEYWORDS);
   if (loc) entities.location = loc[0].trim();
@@ -49,70 +51,91 @@ function extractEntities(text) {
 
 function loadState() {
   try {
+    if (typeof window === 'undefined') return null;
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     return JSON.parse(raw);
-  } catch (e) {
+  } catch {
     return null;
   }
 }
 
 function saveState(state) {
   try {
+    if (typeof window === 'undefined') return;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  } catch (e) {
+  } catch {
     // noop
   }
+}
+
+function formatPhoneForDisplay(phone) {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length === 11 && digits.startsWith("1")) {
+    return `(${digits.slice(1,4)}) ${digits.slice(4,7)}-${digits.slice(7)}`;
+  }
+  if (digits.length === 10) {
+    return `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;
+  }
+  return phone;
 }
 
 export default function ChatBot({ isOpen: controlledIsOpen, onToggle }) {
   const [internalOpen, setInternalOpen] = useState(false);
   const isOpen = controlledIsOpen !== undefined ? controlledIsOpen : internalOpen;
+  
   const setIsOpen = (val) => {
     if (onToggle) onToggle(val);
     else setInternalOpen(val);
   };
 
-  const saved = loadState();
-  const [messages, setMessages] = useState(saved?.messages || []);
-  const [memory, setMemory] = useState(saved?.memory || { projectType: null, location: null, timeline: null, agency: null });
+  const [messages, setMessages] = useState([]);
+  const [memory, setMemory] = useState({ projectType: null, location: null, timeline: null, agency: null });
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
   const [urgentFlag, setUrgentFlag] = useState(false);
   const [showCallOverlay, setShowCallOverlay] = useState(false);
+  const [initialized, setInitialized] = useState(false);
 
   const messagesEndRef = useRef(null);
 
+  // Load saved state on mount
+  useEffect(() => {
+    const saved = loadState();
+    if (saved) {
+      setMessages(saved.messages || []);
+      setMemory(saved.memory || { projectType: null, location: null, timeline: null, agency: null });
+    }
+    setInitialized(true);
+  }, []);
+
+  // Save state when messages/memory change
+  useEffect(() => {
+    if (initialized) {
+      saveState({ messages, memory });
+    }
+  }, [messages, memory, initialized]);
+
+  // Scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    saveState({ messages, memory });
-  }, [messages, memory]);
+  }, [messages]);
 
+  // Check for urgency
   useEffect(() => {
     const lastUser = [...messages].reverse().find(m => m.role === "user");
-    const lastText = input || (lastUser && lastUser.content) || "";
+    const lastText = input || (lastUser?.content) || "";
     setUrgentFlag(URGENCY_KEYWORDS.test(lastText));
   }, [messages, input]);
 
   const defaultQuickActions = [
     "Start consultation",
     "Contact page",
-    `Call (415) 419-6079`
+    `Call ${formatPhoneForDisplay(PHONE)}`
   ];
 
-  function formatPhoneForDisplay(phone) {
-    const digits = phone.replace(/\D/g, "");
-    if (digits.length === 11 && digits.startsWith("1")) {
-      return `(${digits.slice(1,4)}) ${digits.slice(4,7)}-${digits.slice(7)}`;
-    }
-    if (digits.length === 10) {
-      return `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;
-    }
-    return phone;
-  }
-
-  const systemPrompt = `You are Kai, the friendly AI assistant for Pacific Engineering & Construction Inc., a Bay Area engineering and construction firm with decades of expertise. 
+  const systemPrompt = `You are Jordan, the friendly AI assistant for Pacific Engineering & Construction Inc., a Bay Area engineering and construction firm with decades of expertise. 
 
 Your personality: You're approachable, conversational, and genuinely helpful - like chatting with a knowledgeable friend who happens to be an expert in construction services. You use natural language, occasional light humor when appropriate, and empathetic responses. You understand the stress of managing projects and compliance requirements.
 
@@ -148,6 +171,32 @@ When to escalate to human:
 - After 4+ back-and-forth exchanges without clear resolution
 
 Remember: You're here to be helpful first, generate leads second. Building trust through genuine assistance converts better than aggressive sales tactics.`;
+
+  const buildSuggestionChips = (intent) => {
+    const base = ["Start consultation", "Contact page", `Call ${formatPhoneForDisplay(PHONE)}`];
+    switch (intent) {
+      case "inspection":
+        return ["Start inspection consultation", "Request next-day availability", ...base];
+      case "testing":
+        return ["Schedule testing", "Ask about PCB testing", ...base];
+      case "swppp":
+        return ["Start SWPPP consultation", "Ask about BMP timing", ...base];
+      case "pricing":
+        return ["Get a pricing consult", "Provide project details", ...base];
+      case "urgent":
+        return ["Call now", "Request urgent scheduling", ...base];
+      case "contact":
+        return ["Open Contact page", ...base];
+      default:
+        return base;
+    }
+  };
+
+  const ensureCTA = (text) => {
+    const lower = (text || "").toLowerCase();
+    if (/(consult|start the consultation|start consultation|start intake|call|phone)/.test(lower)) return text;
+    return `${text.trim()} Start the consultation or call ${formatPhoneForDisplay(PHONE)}?`;
+  };
 
   const sendMessage = async (messageText) => {
     if (!messageText || !messageText.trim()) return;
@@ -219,37 +268,15 @@ Remember: You're here to be helpful first, generate leads second. Building trust
 
     } catch (err) {
       console.error("Chatbot error:", err);
-      setMessages(prev => [...prev, { role: "assistant", content: `Sorry — a technical issue occurred. Please call ${formatPhoneForDisplay(PHONE)} or visit our Contact page.`, timestamp: new Date().toISOString() }]);
+      setMessages(prev => [...prev, { 
+        role: "assistant", 
+        content: `Sorry — a technical issue occurred. Please call ${formatPhoneForDisplay(PHONE)} or visit our Contact page.`, 
+        timestamp: new Date().toISOString() 
+      }]);
     } finally {
       setIsLoading(false);
     }
   };
-
-  function buildSuggestionChips(intent) {
-    const base = ["Start consultation", "Contact page", `Call (415) 419-6079`];
-    switch (intent) {
-      case "inspection":
-        return ["Start inspection consultation", "Request next-day availability", ...base];
-      case "testing":
-        return ["Schedule testing", "Ask about PCB testing", ...base];
-      case "swppp":
-        return ["Start SWPPP consultation", "Ask about BMP timing", ...base];
-      case "pricing":
-        return ["Get a pricing consult", "Provide project details", ...base];
-      case "urgent":
-        return ["Call now", "Request urgent scheduling", ...base];
-      case "contact":
-        return ["Open Contact page", ...base];
-      default:
-        return base;
-    }
-  }
-
-  function ensureCTA(text) {
-    const lower = (text || "").toLowerCase();
-    if (/(consult|start the consultation|start consultation|start intake|call|phone)/.test(lower)) return text;
-    return `${text.trim()} Start the consultation or call ${formatPhoneForDisplay(PHONE)}?`;
-  }
 
   const handleQuickAction = (action) => {
     if (!action) return;
@@ -264,6 +291,13 @@ Remember: You're here to be helpful first, generate leads second. Building trust
     } else {
       sendMessage(action);
     }
+  };
+
+  const clearHistory = () => {
+    setMessages([]);
+    setMemory({ projectType: null, location: null, timeline: null, agency: null });
+    setSuggestions([]);
+    saveState({ messages: [], memory: { projectType: null, location: null, timeline: null, agency: null } });
   };
 
   return (
@@ -284,6 +318,7 @@ Remember: You're here to be helpful first, generate leads second. Building trust
       {isOpen && (
         <div className="fixed bottom-6 right-6 z-50 w-96 max-w-[calc(100vw-3rem)]">
           <div className="bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200 flex flex-col h-[600px] max-h-[calc(100vh-8rem)]">
+            {/* Header */}
             <div className="bg-gradient-to-r from-blue-600 to-cyan-600 p-4 flex items-center justify-between border-b border-white/10">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
@@ -297,13 +332,12 @@ Remember: You're here to be helpful first, generate leads second. Building trust
 
               <div className="flex items-center gap-2">
                 {urgentFlag && (
-                  <button
-                    title="Urgent request — call now"
-                    onClick={() => { window.location.href = `tel:${PHONE}`; }}
+                  <a
+                    href={`tel:${PHONE}`}
                     className="flex items-center gap-2 px-3 py-1 rounded-full bg-red-500 text-white text-sm font-semibold animate-pulse shadow-lg"
                   >
                     <Phone className="w-4 h-4" /> Call now
-                  </button>
+                  </a>
                 )}
                 <button onClick={() => setIsOpen(false)} className="text-white/80 hover:text-white transition-colors">
                   <X className="w-5 h-5" />
@@ -311,6 +345,7 @@ Remember: You're here to be helpful first, generate leads second. Building trust
               </div>
             </div>
 
+            {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
               {messages.length === 0 && (
                 <div className="text-center space-y-4 py-8">
@@ -318,7 +353,7 @@ Remember: You're here to be helpful first, generate leads second. Building trust
                     <MessageSquare className="w-8 h-8 text-blue-600" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-gray-900 mb-2">Hello! Jordan here., </h4>
+                    <h4 className="font-semibold text-gray-900 mb-2">Hello! Jordan here.</h4>
                     <p className="text-sm text-gray-600">Ask me anything about our services, or let me help you get started!</p>
                   </div>
                   <div className="flex flex-wrap gap-2 justify-center pt-2">
@@ -355,23 +390,20 @@ Remember: You're here to be helpful first, generate leads second. Building trust
                         </button>
                       ))}
                     </div>
-                  ) : (
+                  ) : message.role === "assistant" ? (
                     <div className="flex justify-start">
                       <div className="bg-white border border-gray-200 px-4 py-2 rounded-2xl rounded-tl-sm max-w-[80%] shadow-sm">
                         {message.content}
                       </div>
                     </div>
-                  )}
+                  ) : null}
                 </div>
               ))}
 
               {isLoading && (
                 <div className="flex justify-start">
                   <div className="bg-white border border-gray-200 px-4 py-2 rounded-2xl rounded-tl-sm">
-                    <svg className="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-                    </svg>
+                    <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
                   </div>
                 </div>
               )}
@@ -379,9 +411,10 @@ Remember: You're here to be helpful first, generate leads second. Building trust
               <div ref={messagesEndRef} />
             </div>
 
-            {suggestions.length > 0 && (
+            {/* Suggestion chips */}
+            {suggestions.length > 0 && messages.length > 0 && (
               <div className="p-3 bg-white border-t border-gray-200 flex gap-2 overflow-x-auto">
-                {suggestions.map((s, i) => (
+                {suggestions.slice(0, 4).map((s, i) => (
                   <button
                     key={i}
                     onClick={() => handleQuickAction(s)}
@@ -393,6 +426,7 @@ Remember: You're here to be helpful first, generate leads second. Building trust
               </div>
             )}
 
+            {/* Input form */}
             <form onSubmit={(e) => { e.preventDefault(); sendMessage(input); }} className="p-4 bg-white border-t border-gray-200">
               <div className="flex gap-2">
                 <Input
@@ -405,14 +439,24 @@ Remember: You're here to be helpful first, generate leads second. Building trust
                 <Button
                   type="submit"
                   disabled={isLoading || !input.trim()}
-                  className={clsx("bg-blue-600 hover:bg-blue-700", isLoading && "opacity-60")}
+                  className={cn("bg-blue-600 hover:bg-blue-700", isLoading && "opacity-60")}
                 >
                   <Send className="w-4 h-4" />
                 </Button>
               </div>
+              {messages.length > 0 && (
+                <button 
+                  type="button" 
+                  onClick={clearHistory}
+                  className="text-xs text-gray-400 hover:text-gray-600 mt-2 transition-colors"
+                >
+                  Clear chat history
+                </button>
+              )}
             </form>
           </div>
 
+          {/* Urgent call overlay */}
           {showCallOverlay && (
             <div className="mt-3 rounded-lg shadow-lg bg-white p-3 flex items-center gap-3 border border-red-100">
               <div className="flex-1">
@@ -421,7 +465,7 @@ Remember: You're here to be helpful first, generate leads second. Building trust
               </div>
               <div className="flex gap-2">
                 <a href={`tel:${PHONE}`} className="bg-red-500 text-white px-3 py-2 rounded-lg font-semibold hover:bg-red-600 transition">Call</a>
-                <button onClick={() => { setShowCallOverlay(false); }} className="px-3 py-2 rounded border">Dismiss</button>
+                <button onClick={() => setShowCallOverlay(false)} className="px-3 py-2 rounded border hover:bg-gray-50 transition">Dismiss</button>
               </div>
             </div>
           )}

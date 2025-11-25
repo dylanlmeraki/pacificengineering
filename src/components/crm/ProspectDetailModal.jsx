@@ -29,7 +29,8 @@ import {
   Percent,
   AlertCircle
 } from "lucide-react";
-import calculateLeadScore from "../.@/api/functions/calculateLeadScore";
+import { format } from "date-fns";
+import { calculateLeadScore } from "@/api/functions";
 import MeetingScheduler from "./MeetingScheduler";
 
 export default function ProspectDetailModal({ prospect, onClose }) {

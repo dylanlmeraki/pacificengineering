@@ -246,7 +246,7 @@ export default function SalesDashboard() {
               }`}
             >
               <Brain className="w-5 h-5 mr-2" />
-              AI Prospector
+              Auto-Prospector
               <Sparkles className="w-4 h-4 ml-2" />
             </Button>
 

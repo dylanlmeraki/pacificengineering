@@ -1,86 +1,134 @@
-// Subdomain detection and routing utilities
-export const getSubdomain = () => {
-  if (typeof window === 'undefined') return null;
+// Subdomain detection and routing helpers
+
+const INTERNAL_SUBDOMAIN = "internalportal";
+const CLIENT_SUBDOMAIN = "clientportal";
+const MAIN_DOMAIN = "pacificengineeringsf.com";
+
+/**
+ * Get the current hostname
+ */
+export function getHostname() {
+  if (typeof window === "undefined") return "";
+  return window.location.hostname;
+}
+
+/**
+ * Detect the portal type based on subdomain
+ * @returns {"internal" | "client" | "main" | "dev"}
+ */
+export function getPortalType() {
+  const hostname = getHostname();
   
-  const hostname = window.location.hostname;
-  const parts = hostname.split('.');
-  
-  // For localhost development
-  if (hostname === 'localhost' || hostname === '127.0.0.1') {
-    const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get('subdomain');
+  // Local development
+  if (hostname === "localhost" || hostname === "127.0.0.1") {
+    return "dev";
   }
   
-  // For production domains like clientportal.pacificengineeringsf.com
-  if (parts.length >= 3) {
-    return parts[0];
+  // Check for internal portal subdomain
+  if (hostname.startsWith(INTERNAL_SUBDOMAIN)) {
+    return "internal";
   }
   
-  return null;
-};
-
-export const isInternalPortal = () => {
-  const subdomain = getSubdomain();
-  return subdomain === 'internalportal';
-};
-
-export const isClientPortal = () => {
-  const subdomain = getSubdomain();
-  return subdomain === 'clientportal';
-};
-
-export const isMainDomain = () => {
-  const subdomain = getSubdomain();
-  return !subdomain || subdomain === 'www';
-};
-
-export const getPortalType = () => {
-  if (isInternalPortal()) return 'internal';
-  if (isClientPortal()) return 'client';
-  return 'public';
-};
-
-export const getClientPortalUrl = (path = '/') => {
-  if (typeof window === 'undefined') return path;
+  // Check for client portal subdomain
+  if (hostname.startsWith(CLIENT_SUBDOMAIN)) {
+    return "client";
+  }
   
-  const hostname = window.location.hostname;
+  // Main domain or other
+  return "main";
+}
+
+/**
+ * Check if current domain is the internal portal
+ */
+export function isInternalPortal() {
+  return getPortalType() === "internal";
+}
+
+/**
+ * Check if current domain is the client portal
+ */
+export function isClientPortal() {
+  return getPortalType() === "client";
+}
+
+/**
+ * Check if current domain is the main public site
+ */
+export function isMainDomain() {
+  const type = getPortalType();
+  return type === "main" || type === "dev";
+}
+
+/**
+ * Get the URL for the internal portal
+ * @param {string} path - Optional path to append
+ */
+export function getInternalPortalUrl(path = "") {
+  if (typeof window === "undefined") return "";
   const protocol = window.location.protocol;
-  const port = window.location.port ? `:${window.location.port}` : '';
-  
-  if (hostname === 'localhost' || hostname === '127.0.0.1') {
-    return `${protocol}//${hostname}${port}${path}?subdomain=clientportal`;
-  }
-  
-  const baseDomain = hostname.split('.').slice(-2).join('.');
-  return `${protocol}//clientportal.${baseDomain}${port}${path}`;
-};
+  const baseUrl = `${protocol}//${INTERNAL_SUBDOMAIN}.${MAIN_DOMAIN}`;
+  return path ? `${baseUrl}${path}` : baseUrl;
+}
 
-export const getInternalPortalUrl = (path = '/') => {
-  if (typeof window === 'undefined') return path;
-  
-  const hostname = window.location.hostname;
+/**
+ * Get the URL for the client portal
+ * @param {string} path - Optional path to append
+ */
+export function getClientPortalUrl(path = "") {
+  if (typeof window === "undefined") return "";
   const protocol = window.location.protocol;
-  const port = window.location.port ? `:${window.location.port}` : '';
-  
-  if (hostname === 'localhost' || hostname === '127.0.0.1') {
-    return `${protocol}//${hostname}${port}${path}?subdomain=internalportal`;
-  }
-  
-  const baseDomain = hostname.split('.').slice(-2).join('.');
-  return `${protocol}//internalportal.${baseDomain}${port}${path}`;
-};
+  const baseUrl = `${protocol}//${CLIENT_SUBDOMAIN}.${MAIN_DOMAIN}`;
+  return path ? `${baseUrl}${path}` : baseUrl;
+}
 
-export const getMainDomainUrl = (path = '/') => {
-  if (typeof window === 'undefined') return path;
-  
-  const hostname = window.location.hostname;
+/**
+ * Get the URL for the main site
+ * @param {string} path - Optional path to append
+ */
+export function getMainSiteUrl(path = "") {
+  if (typeof window === "undefined") return "";
   const protocol = window.location.protocol;
-  const port = window.location.port ? `:${window.location.port}` : '';
+  const baseUrl = `${protocol}//${MAIN_DOMAIN}`;
+  return path ? `${baseUrl}${path}` : baseUrl;
+}
+
+/**
+ * Alias for getMainSiteUrl (for backwards compatibility)
+ * @param {string} path - Optional path to append
+ */
+export function getMainDomainUrl(path = "") {
+  return getMainSiteUrl(path);
+}
+
+/**
+ * Redirect to appropriate portal based on user role
+ * @param {string} role - User role ('admin', 'user', 'client')
+ */
+export function redirectToPortal(role) {
+  const portalType = getPortalType();
   
-  if (hostname === 'localhost' || hostname === '127.0.0.1') {
-    return `${protocol}//${hostname}${port}${path}`;
+  if (role === "admin" || role === "user") {
+    // Internal users should be on internal portal
+    if (portalType !== "internal" && portalType !== "dev") {
+      window.location.href = getInternalPortalUrl();
+    }
+  } else {
+    // Clients should be on client portal
+    if (portalType !== "client" && portalType !== "dev") {
+      window.location.href = getClientPortalUrl();
+    }
   }
-  
-  const baseDomain = hostname.split('.').slice(-2).join('.');
-  return `${protocol}//${baseDomain}${port}${path}`;
+}
+
+export default {
+  getHostname,
+  getPortalType,
+  isInternalPortal,
+  isClientPortal,
+  isMainDomain,
+  getInternalPortalUrl,
+  getClientPortalUrl,
+  getMainSiteUrl,
+  redirectToPortal
 };

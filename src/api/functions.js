@@ -65,3 +65,9 @@ export const sendClientInvite = base44.functions.sendClientInvite;
 
 export const shareProposal = base44.functions.shareProposal;
 
+export const calculateLeadScore = base44.functions.calculateLeadScore;
+
+export const autoCreateTasks = base44.functions.autoCreateTasks;
+
+export const executeWorkflow = base44.functions.executeWorkflow;
+

@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { getClientPortalUrl, isMainDomain } from "@/components/utils/subdomainHelpers";
 import { User, Bell } from "lucide-react";
-import ChatBot from "@/components/ChatBot";
+import ChatBot from "@/components/ChatBot.jsx";
 import NotificationCenter from "@/components/notifications/NotificationCenter";
 
 export default function FloatingButtons({ user }) {

@@ -25,7 +25,6 @@ import {
   AlertCircle
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import enrichProspect from "../.@/api/functions/enrichProspect";
 
 export default function AIProspectorPanel({ onProspectsCreated }) {
   const [searchMode, setSearchMode] = useState("guided"); // guided, custom, auto
@@ -220,7 +219,7 @@ Return a JSON object with:
       console.log('Prospect created successfully:', createdProspect);
       
       // Auto-enrich the prospect in the background
-      enrichProspect({ prospectId: createdProspect.id })
+      base44.functions.invoke('enrichProspect', { prospectId: createdProspect.id })
         .then(() => console.log('Prospect enriched successfully'))
         .catch(err => console.warn('Enrichment failed:', err.message));
       

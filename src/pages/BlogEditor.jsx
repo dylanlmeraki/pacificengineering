@@ -272,7 +272,7 @@ Format as JSON:
                         ) : (
                           <Sparkles className="w-4 h-4 mr-1" />
                         )}
-                        AI Content
+                        Auto-Generate Content
                       </Button>
                     </div>
                   </div>
@@ -432,7 +432,7 @@ Format as JSON:
                           ) : (
                             <>
                               <Sparkles className="w-4 h-4 mr-2" />
-                              Generate with AI
+                              Optimize SEO
                             </>
                           )}
                         </Button>
