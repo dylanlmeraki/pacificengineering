@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Loader2, CheckCircle } from "lucide-react";
-import enrichProspect from "../.@/api/functions/enrichProspect";
+import { enrichProspect } from "@/api/functions";
 
 export default function EnrichmentButton({ prospectId, onEnrichmentComplete, size = "sm" }) {
   const [isEnriching, setIsEnriching] = useState(false);

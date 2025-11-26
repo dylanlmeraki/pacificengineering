@@ -24,8 +24,13 @@ import {
   PlusCircle,
   Inbox,
   Download,
-  User
+  User,
+  RefreshCw
 } from "lucide-react";
+import ErrorBoundary from "../components/ErrorBoundary";
+import ErrorDisplay from "../components/common/ErrorDisplay";
+import { parseError, logError } from "../components/utils/errorHandler";
+import { warn, error as logErrorMsg } from "../components/utils/logger";
 import ProjectCard from "../components/portal/ProjectCard";
 import ClientDashboard from "../components/portal/ClientDashboard";
 import DocumentUploader from "../components/portal/DocumentUploader";
@@ -52,32 +57,61 @@ export default function ClientPortal() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedProposal, setSelectedProposal] = useState(null);
   const [viewingProposal, setViewingProposal] = useState(false);
+  const [authError, setAuthError] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
+        setAuthLoading(true);
+        setAuthError(null);
+        
+        const isAuth = await base44.auth.isAuthenticated();
+        if (!isAuth) {
+          // Redirect to auth page if not authenticated
+          const currentPath = window.location.pathname + window.location.search;
+          base44.auth.redirectToLogin(currentPath);
+          return;
+        }
+        
         const currentUser = await base44.auth.me();
         setUser(currentUser);
       } catch (error) {
-        console.error("Failed to fetch user:", error);
-        // Redirect to auth page if not authenticated
-        window.location.href = "/Auth";
+        logError(error, { context: 'ClientPortal - fetchUser' });
+        logErrorMsg("Failed to fetch user in ClientPortal", { error: error?.message });
+        const parsed = parseError(error);
+        
+        if (parsed.statusCode === 401 || parsed.type === 'AUTH_ERROR') {
+          const currentPath = window.location.pathname + window.location.search;
+          base44.auth.redirectToLogin(currentPath);
+        } else {
+          setAuthError(parsed);
+        }
+      } finally {
+        setAuthLoading(false);
       }
     };
     fetchUser();
   }, []);
 
-  const { data: projects = [], isLoading } = useQuery({
+  const { data: projects = [], isLoading, error: projectsError, refetch: refetchProjects } = useQuery({
     queryKey: ['client-projects', user?.email],
     queryFn: async () => {
       if (!user) return [];
-      return await base44.entities.Project.filter(
-        { client_email: user.email },
-        '-created_date',
-        100
-      );
+      try {
+        return await base44.entities.Project.filter(
+          { client_email: user.email },
+          '-created_date',
+          100
+        );
+      } catch (error) {
+        logError(error, { context: 'ClientPortal - fetchProjects', userEmail: user?.email });
+        throw error;
+      }
     },
-    enabled: !!user
+    enabled: !!user,
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000)
   });
 
   const { data: allMilestones = [] } = useQuery({
@@ -192,10 +226,45 @@ export default function ClientPortal() {
     pending: projects.filter(p => p.status === "Planning" || p.status === "Under Review").length
   };
 
+  // Loading state
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-4" />
+          <p className="text-gray-600">Verifying your session...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Auth error state
+  if (authError) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+        <ErrorDisplay 
+          error={authError} 
+          onRetry={() => window.location.reload()}
+          showHomeButton={true}
+        />
+      </div>
+    );
+  }
+
   if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+        <Card className="p-8 text-center max-w-md">
+          <Shield className="w-12 h-12 text-blue-600 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Authentication Required</h2>
+          <p className="text-gray-600 mb-4">Please log in to access your client portal.</p>
+          <Button 
+            onClick={() => base44.auth.redirectToLogin(window.location.href)}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            Log In
+          </Button>
+        </Card>
       </div>
     );
   }

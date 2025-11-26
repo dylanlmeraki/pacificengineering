@@ -5,6 +5,7 @@ import { getClientPortalUrl, isMainDomain } from "@/components/utils/subdomainHe
 import { User, Bell } from "lucide-react";
 import ChatBot from "@/components/ChatBot.jsx";
 import NotificationCenter from "@/components/notifications/NotificationCenter";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 export default function FloatingButtons({ user }) {
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -17,9 +18,11 @@ export default function FloatingButtons({ user }) {
   return (
     <>
       {/* Chat Bot with State Tracking */}
-      <div>
-        <ChatBotWrapper onOpenChange={setIsChatOpen} />
-      </div>
+      <ErrorBoundary>
+        <div>
+          <ChatBotWrapper onOpenChange={setIsChatOpen} />
+        </div>
+      </ErrorBoundary>
 
       {/* Floating Action Buttons */}
       <div className="fixed bottom-6 z-50 flex items-center gap-3 transition-all duration-300"
@@ -27,9 +30,11 @@ export default function FloatingButtons({ user }) {
         
         {/* Notification Button */}
         {user && (
-          <div className="relative">
-            <NotificationCenter user={user} />
-          </div>
+          <ErrorBoundary>
+            <div className="relative">
+              <NotificationCenter user={user} />
+            </div>
+          </ErrorBoundary>
         )}
 
         {/* Client Portal Button */}

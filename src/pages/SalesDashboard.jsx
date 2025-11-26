@@ -38,9 +38,9 @@ import {
 import ProspectDetailModal from "../components/crm/ProspectDetailModal";
 import ProspectKanban from "../components/crm/ProspectKanban";
 import AIProspectorPanel from "../components/crm/AIProspectorPanel";
-import calculateLeadScore from ".@/api/functions/calculateLeadScore";
-import autoCreateTasks from ".@/api/functions/autoCreateTasks";
-import executeWorkflow from ".@/api/functions/executeWorkflow";
+import { calculateLeadScore } from "@/api/functions";
+import ErrorDisplay from "../components/common/ErrorDisplay";
+import { parseError, logError } from "../components/utils/errorHandler";
 
 export default function SalesDashboard() {
   const [view, setView] = useState("kanban"); // kanban, list, analytics, ai-prospector
@@ -58,26 +58,28 @@ export default function SalesDashboard() {
       try {
         return await base44.entities.Workflow.list('-created_date', 50);
       } catch (error) {
-        console.error('Error loading workflows:', error);
+        logError(error, { context: 'Loading workflows' });
         return [];
       }
     },
     initialData: [],
-    retry: 1
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000)
   });
 
-  const { data: prospects = [], isLoading: loadingProspects, error: prospectsError } = useQuery({
+  const { data: prospects = [], isLoading: loadingProspects, error: prospectsError, refetch: refetchProspects } = useQuery({
     queryKey: ['prospects'],
     queryFn: async () => {
       try {
         return await base44.entities.Prospect.list('-updated_date', 200);
       } catch (error) {
-        console.error('Error loading prospects:', error);
-        return [];
+        logError(error, { context: 'Loading prospects' });
+        throw error;
       }
     },
     initialData: [],
-    retry: 1
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000)
   });
 
   const { data: interactions = [], error: interactionsError } = useQuery({
@@ -86,12 +88,12 @@ export default function SalesDashboard() {
       try {
         return await base44.entities.Interaction.list('-interaction_date', 500);
       } catch (error) {
-        console.error('Error loading interactions:', error);
+        logError(error, { context: 'Loading interactions' });
         return [];
       }
     },
     initialData: [],
-    retry: 1
+    retry: 2
   });
 
   const { data: tasks = [], error: tasksError } = useQuery({
@@ -100,12 +102,12 @@ export default function SalesDashboard() {
       try {
         return await base44.entities.Task.list('-due_date', 300);
       } catch (error) {
-        console.error('Error loading tasks:', error);
+        logError(error, { context: 'Loading tasks' });
         return [];
       }
     },
     initialData: [],
-    retry: 1
+    retry: 2
   });
 
   const { data: outreach = [], error: outreachError } = useQuery({
@@ -114,36 +116,25 @@ export default function SalesDashboard() {
       try {
         return await base44.entities.SalesOutreach.list('-sent_date', 500);
       } catch (error) {
-        console.error('Error loading outreach:', error);
+        logError(error, { context: 'Loading outreach' });
         return [];
       }
     },
     initialData: [],
-    retry: 1
+    retry: 2
   });
-
-  // Auto-update scores periodically - disabled to prevent errors
-  // useEffect(() => {
-  //   const updateScores = async () => {
-  //     if (!Array.isArray(prospects) || prospects.length === 0) return;
-  //     // Score update logic here
-  //   };
-  //   const interval = setInterval(updateScores, 5 * 60 * 1000);
-  //   return () => clearInterval(interval);
-  // }, [prospects.length, interactions.length, outreach.length, queryClient]);
 
   // Auto-create tasks and run workflows
   const runAutomationMutation = useMutation({
     mutationFn: async () => {
       try {
-        // Simple placeholder for now - just return success
         return { 
           tasksCreated: 0,
           workflows: [],
           summary: "Automation system ready"
         };
       } catch (error) {
-        console.error('Automation error:', error);
+        logError(error, { context: 'Running automation' });
         throw error;
       }
     },
@@ -151,13 +142,28 @@ export default function SalesDashboard() {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['prospects'] });
       queryClient.invalidateQueries({ queryKey: ['workflows'] });
+    },
+    onError: (error) => {
+      logError(error, { context: 'Automation mutation failed' });
     }
   });
 
   const handleRunAutomation = async () => {
     setIsAutoRunning(true);
-    await runAutomationMutation.mutateAsync();
-    setIsAutoRunning(false);
+    try {
+      await runAutomationMutation.mutateAsync();
+    } catch (error) {
+      // Error already logged in mutation
+    } finally {
+      setIsAutoRunning(false);
+    }
+  };
+
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['prospects'] });
+    queryClient.invalidateQueries({ queryKey: ['interactions'] });
+    queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    queryClient.invalidateQueries({ queryKey: ['outreach'] });
   };
 
   // Filter prospects
@@ -218,12 +224,18 @@ export default function SalesDashboard() {
         {/* Error Banner */}
         {hasErrors && (
           <Card className="p-4 mb-6 border-0 shadow-xl bg-red-50 border-l-4 border-red-500">
-            <div className="flex items-center gap-3">
-              <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
-              <div>
-                <p className="font-semibold text-red-900">Connection Issue</p>
-                <p className="text-sm text-red-700">Some data couldn't be loaded. Click Refresh to try again.</p>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
+                <div>
+                  <p className="font-semibold text-red-900">Connection Issue</p>
+                  <p className="text-sm text-red-700">Some data couldn't be loaded. Click Refresh to try again.</p>
+                </div>
               </div>
+              <Button variant="outline" size="sm" onClick={handleRefresh}>
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Retry
+              </Button>
             </div>
           </Card>
         )}
@@ -267,11 +279,7 @@ export default function SalesDashboard() {
                 </>
               )}
             </Button>
-            <Button variant="outline" onClick={() => {
-              queryClient.invalidateQueries({ queryKey: ['prospects'] });
-              queryClient.invalidateQueries({ queryKey: ['interactions'] });
-              queryClient.invalidateQueries({ queryKey: ['tasks'] });
-            }}>
+            <Button variant="outline" onClick={handleRefresh}>
               <RefreshCw className="w-5 h-5 mr-2" />
               Refresh
             </Button>
@@ -283,8 +291,6 @@ export default function SalesDashboard() {
           <AIProspectorPanel
             onProspectsCreated={(newProspects) => {
               queryClient.invalidateQueries({ queryKey: ['prospects'] });
-              // Optionally switch back to kanban view to see new prospects
-              // setView("kanban"); 
             }}
           />
         ) : (
@@ -444,7 +450,6 @@ export default function SalesDashboard() {
             ) : filteredProspects.length === 0 ? (
               <Card className="p-12 text-center border-0 shadow-xl">
                 <Target className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                {/* Updated message */}
                 <p className="text-gray-600 text-lg">No prospects found. Adjust your filters or use the AI Prospector to find new leads.</p>
               </Card>
             ) : (

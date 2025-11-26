@@ -25,18 +25,29 @@ import {
 import { Button } from "@/components/ui/button";
 import NotificationCenter from "@/components/notifications/NotificationCenter";
 import ProfileModal from "./ProfileModal";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import { logError } from "@/components/utils/errorHandler";
+import { warn } from "@/components/utils/logger";
 
 export default function InternalLayout({ children }) {
   const [user, setUser] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [authError, setAuthError] = useState(null);
   const location = useLocation();
 
   useEffect(() => {
     const fetchUser = async () => {
-      const currentUser = await base44.auth.me();
-      setUser(currentUser);
+      try {
+        const currentUser = await base44.auth.me();
+        setUser(currentUser);
+        setAuthError(null);
+      } catch (error) {
+        logError(error, { context: 'InternalLayout - fetchUser' });
+        warn('Failed to fetch user in InternalLayout', { error: error?.message });
+        setAuthError(error);
+      }
     };
     fetchUser();
   }, []);
@@ -259,7 +270,9 @@ export default function InternalLayout({ children }) {
 
       {/* Main Content */}
       <main className={`min-h-screen pt-16 lg:pt-0 transition-all duration-300 ${sidebarCollapsed ? "lg:ml-20" : "lg:ml-64"}`}>
-        {children}
+        <ErrorBoundary>
+          {children}
+        </ErrorBoundary>
       </main>
 
       {/* Overlay for mobile */}

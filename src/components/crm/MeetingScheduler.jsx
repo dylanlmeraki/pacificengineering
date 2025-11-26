@@ -7,17 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  Calendar as CalendarIcon,
-  Clock,
-  Video,
-  CheckCircle,
-  AlertCircle,
-  ExternalLink,
-  Settings,
-  X
-} from "lucide-react";
-import scheduleMeeting from "../.@/api/functions/scheduleMeeting";
+import { Calendar as CalendarIcon, Clock, Video, CheckCircle, AlertCircle, ExternalLink, Settings, X } from "lucide-react";
+import { scheduleMeeting } from "@/api/functions";
 
 export default function MeetingScheduler({ prospect, onClose, onSuccess }) {
   const queryClient = useQueryClient();

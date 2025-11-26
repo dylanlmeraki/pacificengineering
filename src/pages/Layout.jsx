@@ -8,13 +8,20 @@ import { Button } from "@/components/ui/button";
 import FloatingButtons from "@/components/FloatingButtons";
 import { base44 } from "@/api/base44Client";
 import InternalLayout from "@/components/internal/InternalLayout";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import { logError } from "@/components/utils/errorHandler";
+import { warn } from "@/components/utils/logger";
 
 export default function Layout({ children, currentPageName }) {
   const portalType = getPortalType();
   
   // If on internal subdomain, use InternalLayout
   if (isInternalPortal()) {
-    return <InternalLayout>{children}</InternalLayout>;
+    return (
+      <ErrorBoundary>
+        <InternalLayout>{children}</InternalLayout>
+      </ErrorBoundary>
+    );
   }
   
   // If on client subdomain, redirect to ClientPortal page
@@ -24,6 +31,8 @@ export default function Layout({ children, currentPageName }) {
       return null;
     }
   }
+
+  // Wrap main site content in ErrorBoundary
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [servicesDropdownOpen, setServicesDropdownOpen] = useState(false);
@@ -45,6 +54,8 @@ export default function Layout({ children, currentPageName }) {
         const currentUser = await base44.auth.me();
         setUser(currentUser);
       } catch (error) {
+        logError(error, { context: 'Layout - fetchUser' });
+        warn('Failed to fetch user in Layout', { error: error?.message });
         setUser(null);
       }
     };
@@ -67,6 +78,7 @@ export default function Layout({ children, currentPageName }) {
   ];
 
   return (
+    <ErrorBoundary>
     <div className="min-h-screen bg-white">
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-40 bg-gradient-to-r from-blue-600 to-cyan-600 shadow-lg">
@@ -375,5 +387,6 @@ export default function Layout({ children, currentPageName }) {
         </div>
       </footer>
     </div>
+      </ErrorBoundary>
   );
 }

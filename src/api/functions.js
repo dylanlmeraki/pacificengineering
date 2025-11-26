@@ -9,6 +9,8 @@ export const syncClientToCRM = base44.functions.syncClientToCRM;
 
 export const enrichProspect = base44.functions.enrichProspect;
 
+export const scheduleMeeting = base44.functions.scheduleMeeting;
+
 export const createNotification = base44.functions.createNotification;
 
 export const notifyAdminsContactForm = base44.functions.notifyAdminsContactForm;
@@ -66,8 +68,4 @@ export const sendClientInvite = base44.functions.sendClientInvite;
 export const shareProposal = base44.functions.shareProposal;
 
 export const calculateLeadScore = base44.functions.calculateLeadScore;
-
-export const autoCreateTasks = base44.functions.autoCreateTasks;
-
-export const executeWorkflow = base44.functions.executeWorkflow;
 
