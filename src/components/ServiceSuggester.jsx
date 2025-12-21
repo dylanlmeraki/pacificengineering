@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 import { base44 } from "@/api/base44Client";
 import { Card } from "@/components/ui/card";
 import { Sparkles, Lightbulb, TrendingUp } from "lucide-react";
@@ -90,6 +91,11 @@ Return as JSON with this structure:
       </Card>
     );
   }
+  
+  ServiceSuggester.propTypes = {
+    description: PropTypes.string,
+    onSuggestionsReady: PropTypes.func,
+  };
 
   if (!suggestions) return null;
 

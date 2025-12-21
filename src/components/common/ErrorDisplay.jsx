@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { ErrorTypes, formatErrorForDisplay } from "../utils/errorHandler";
+import { ErrorTypes, formatErrorForDisplay } from "@/components/utils/errorHandler";
 
 const errorIcons = {
   [ErrorTypes.NETWORK]: WifiOff,

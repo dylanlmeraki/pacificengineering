@@ -1,14 +1,13 @@
 import './App.css'
-import Pages from "@/pages/index.jsx"
-import { Toaster } from "@/components/ui/toaster"
+import { AuthProvider } from "@/context/AuthContext";
+import AppRouter from "@/router/AppRouter";
+import { Toaster } from "@/components/ui/toaster";
 
-function App() {
+export default function App() {
   return (
-    <>
-      <Pages />
+    <AuthProvider>
+      <AppRouter />
       <Toaster />
-    </>
-  )
+    </AuthProvider>
+  );
 }
-
-export default App 

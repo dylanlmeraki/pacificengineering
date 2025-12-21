@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import PropTypes from "prop-types";
 
 export default function ScrollFadeSection({ children, className = "" }) {
   const [isVisible, setIsVisible] = useState(false);
@@ -37,3 +38,8 @@ export default function ScrollFadeSection({ children, className = "" }) {
     </div>
   );
 }
+
+ScrollFadeSection.propTypes = {
+  children: PropTypes.node,
+  className: PropTypes.string,
+};

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, XCircle, FileSignature, MessageSquare, Loader2, AlertTriangle } from "lucide-react";
-import SignaturePad from "../proposals/SignaturePad";
+import SignaturePad from "@/components/proposals/SignaturePad";
 
 export default function ProposalAcceptance({ proposal, user, onComplete }) {
   const [action, setAction] = useState(null); // 'accept' or 'reject'

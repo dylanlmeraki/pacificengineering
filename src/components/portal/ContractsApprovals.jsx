@@ -8,9 +8,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileSignature, CheckCircle2, Clock, AlertCircle, FileText, Loader2, PenSquare } from "lucide-react";
 import { createPageUrl } from "@/utils";
 import { format } from "date-fns";
-import MilestoneApproval from "./MilestoneApproval";
-import ChangeOrderApproval from "./ChangeOrderApproval";
-import DocumentSigner from "./DocumentSigner";
+import MilestoneApproval from "@/components/portal/approvals/MilestoneApproval";
+import ChangeOrderApproval from "@/components/portal/approvals/ChangeOrderApproval";
+import DocumentSigner from "@/components/portal/proposals/DocumentSigner";
 
 export default function ContractsApprovals({ user, projects }) {
   const [signingDocument, setSigningDocument] = useState(null);

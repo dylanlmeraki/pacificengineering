@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import PropTypes from "prop-types";
 import { getPortalType, isInternalPortal, isClientPortal, isMainDomain } from "@/components/utils/subdomainHelpers";
 import { base44 } from "@/api/base44Client";
 import { Loader2 } from "lucide-react";
@@ -57,3 +58,7 @@ export default function SubdomainRouter({ children }) {
 
   return children;
 }
+
+SubdomainRouter.propTypes = {
+  children: PropTypes.node
+};

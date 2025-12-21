@@ -33,7 +33,7 @@ import {
   CheckCircle
 } from "lucide-react";
 import { format } from "date-fns";
-import TwoFactorSetup from "../auth/TwoFactorSetup";
+import TwoFactorSetup from "@/components/auth/TwoFactorSetup";
 
 export default function ClientAccountManager({ currentUser }) {
   const [searchQuery, setSearchQuery] = useState("");

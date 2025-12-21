@@ -1,8 +1,8 @@
 // API Helper Utilities for Node.js Friendly Environment
 // Provides wrappers for API calls with error handling, retries, and logging
 
-import { parseError, withRetry, safeAsync, logError } from './errorHandler';
-import { logApiRequest, logApiResponse } from './logger';
+import { parseError, withRetry, safeAsync, logError } from '@/components/utils/errorHandler';
+import { logApiRequest, logApiResponse } from '@/components/utils/logger';
 
 /**
  * Default request timeout in milliseconds

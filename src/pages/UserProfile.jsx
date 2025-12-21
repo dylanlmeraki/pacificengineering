@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User, Shield, Settings, Loader2, CheckCircle } from "lucide-react";
-import TwoFactorSetup from "../components/auth/TwoFactorSetup";
-import InternalLayout from "../components/internal/InternalLayout";
+import TwoFactorSetup from "@/components/auth/TwoFactorSetup";
+import InternalLayout from "@/layouts/InternalLayout";
 
 export default function UserProfile() {
   const [user, setUser] = useState(null);

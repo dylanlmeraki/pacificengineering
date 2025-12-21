@@ -11,6 +11,8 @@ import InternalLayout from "@/components/internal/InternalLayout";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { logError } from "@/components/utils/errorHandler";
 import { warn } from "@/components/utils/logger";
+import { Navigate } from "react-router-dom";
+
 
 export default function Layout({ children, currentPageName }) {
   const portalType = getPortalType();
@@ -26,10 +28,7 @@ export default function Layout({ children, currentPageName }) {
   
   // If on client subdomain, redirect to ClientPortal page
   if (isClientPortal()) {
-    if (typeof window !== 'undefined' && window.location.pathname !== createPageUrl("ClientPortal")) {
-      window.location.href = createPageUrl("ClientPortal");
-      return null;
-    }
+    return <Navigate to={createPageUrl("ClientPortal")} replace />;
   }
 
   // Wrap main site content in ErrorBoundary

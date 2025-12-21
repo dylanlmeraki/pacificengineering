@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+// React import not needed with the new JSX transform
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";

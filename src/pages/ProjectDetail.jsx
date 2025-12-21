@@ -25,15 +25,15 @@ import {
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import DocumentUploader from "../components/portal/DocumentUploader";
-import MessageThread from "../components/portal/MessageThread";
-import ProposalBuilder from "../components/portal/ProposalBuilder";
-import ProgressTracker from "../components/portal/ProgressTracker";
-import MilestoneApproval from "../components/portal/MilestoneApproval";
-import ChangeOrderApproval from "../components/portal/ChangeOrderApproval";
-import CommentSection from "../components/portal/CommentSection";
-import ClientTaskList from "../components/portal/ClientTaskList";
-import DocumentAnnotator from "../components/portal/DocumentAnnotator";
+import DocumentUploader from "@/components/portal/Documents/DocumentUploader";
+import MessageThread from "@/components/portal/Messaging/MessageThread";
+import ProposalBuilder from "@/components/portal/ProposalBuilder";
+import ProgressTracker from "@/components/portal/ProgressTracker";
+import MilestoneApproval from "@/components/portal/Approvals/MilestoneApproval";
+import ChangeOrderApproval from "@/components/portal/Approvals/ChangeOrderApproval";
+import CommentSection from "@/components/portal/CommentSection";
+import ClientTaskList from "@/components/portal/ClientTaskList";
+import DocumentAnnotator from "@/components/portal/DocumentAnnotator";
 
 export default function ProjectDetail() {
   const [user, setUser] = useState(null);

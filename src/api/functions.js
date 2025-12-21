@@ -1,71 +1,146 @@
-import { base44 } from './base44Client';
+import { api } from "@/api/httpClient";
 
+/**
+ * Explicit stub for not-yet-migrated functions.
+ * This prevents silent crashes and makes migration obvious.
+ */
+function notMigrated(name) {
+  return async () => {
+    throw new Error(
+      `[MIGRATION] Function "${name}" is not migrated off Base44 yet`
+    );
+  };
+}
 
-export const submitConsultationForm = base44.functions.submitConsultationForm;
+/* =====================================================
+   FORMS (ALREADY MIGRATED OR SAFE TO WIRE NOW)
+   ===================================================== */
 
-export const createUserAccount = base44.functions.createUserAccount;
+export async function submitConsultationForm(formData) {
+  const res = await api.post("/api/forms/consultation", formData);
+  return res.data;
+}
 
-export const syncClientToCRM = base44.functions.syncClientToCRM;
+export async function createContactFromForm(formData) {
+  const res = await api.post("/api/forms/contact", formData);
+  return res.data;
+}
 
-export const enrichProspect = base44.functions.enrichProspect;
+/* =====================================================
+   AUTH / USERS (PHASE 3)
+   ===================================================== */
 
-export const scheduleMeeting = base44.functions.scheduleMeeting;
+export const createUserAccount = notMigrated("createUserAccount");
+export const validateInvite = notMigrated("validateInvite");
+export const completeInviteRegistration = notMigrated("completeInviteRegistration");
+export const createClientInvite = notMigrated("createClientInvite");
+export const sendClientInvite = notMigrated("sendClientInvite");
 
-export const createNotification = base44.functions.createNotification;
+/* =====================================================
+   BLOG / AI (PHASE 2.2)
+   ===================================================== */
 
-export const notifyAdminsContactForm = base44.functions.notifyAdminsContactForm;
+export const generateBlogContent = notMigrated("generateBlogContent");
+export const extractPageContent = notMigrated("extractPageContent");
 
-export const sendProposalReminder = base44.functions.sendProposalReminder;
+/* =====================================================
+   NOTIFICATIONS (PHASE 4)
+   ===================================================== */
 
-export const validateInvite = base44.functions.validateInvite;
+export const createNotification = notMigrated("createNotification");
+export const sendNotification = notMigrated("sendNotification");
+export const notifyAdminsContactForm = notMigrated("notifyAdminsContactForm");
+export const notifyProjectUpdate = notMigrated("notifyProjectUpdate");
+export const notifyTeamProjectAssigned = notMigrated("notifyTeamProjectAssigned");
 
-export const completeInviteRegistration = base44.functions.completeInviteRegistration;
+/* =====================================================
+   CRM / SALES / PROSPECTING
+   ===================================================== */
 
-export const createContactFromForm = base44.functions.createContactFromForm;
+export const syncClientToCRM = notMigrated("syncClientToCRM");
+export const enrichProspect = notMigrated("enrichProspect");
+export const analyzeContactInquiry = notMigrated("analyzeContactInquiry");
+export const analyzeProjectRequest = notMigrated("analyzeProjectRequest");
+export const identifySalesOpportunities = notMigrated("identifySalesOpportunities");
+export const calculateLeadScore = notMigrated("calculateLeadScore");
 
-export const scheduleFollowUp = base44.functions.scheduleFollowUp;
+/* =====================================================
+   PROPOSALS / CONTRACTS
+   ===================================================== */
 
-export const generateProposal = base44.functions.generateProposal;
+export const generateProposal = notMigrated("generateProposal");
+export const generateProposalDraft = notMigrated("generateProposalDraft");
+export const shareProposal = notMigrated("shareProposal");
 
-export const sendNotification = base44.functions.sendNotification;
+export const generateContractDocument = notMigrated("generateContractDocument");
+export const sendContractToClient = notMigrated("sendContractToClient");
+export const remindContractSignature = notMigrated("remindContractSignature");
+export const archiveCompletedProjects = notMigrated("archiveCompletedProjects");
 
-export const notifyProjectUpdate = base44.functions.notifyProjectUpdate;
+/* =====================================================
+   MEETINGS / FOLLOW UPS
+   ===================================================== */
 
-export const analyzeContactInquiry = base44.functions.analyzeContactInquiry;
+export const scheduleMeeting = notMigrated("scheduleMeeting");
+export const scheduleFollowUp = notMigrated("scheduleFollowUp");
+export const sendFollowUpEmail = notMigrated("sendFollowUpEmail");
 
-export const analyzeProjectRequest = base44.functions.analyzeProjectRequest;
+/* =====================================================
+   STRIPE / BILLING
+   ===================================================== */
 
-export const identifySalesOpportunities = base44.functions.identifySalesOpportunities;
+export const stripeWebhook = notMigrated("stripeWebhook");
+export const createStripeInvoice = notMigrated("createStripeInvoice");
+export const checkOverdueInvoices = notMigrated("checkOverdueInvoices");
 
-export const generateProposalDraft = base44.functions.generateProposalDraft;
+/* =====================================================
+   MARKETING / SEO / ANALYTICS
+   ===================================================== */
 
-export const createClientInvite = base44.functions.createClientInvite;
+export const evaluateMarketingCampaign = notMigrated("evaluateMarketingCampaign");
+export const optimizeAdSpend = notMigrated("optimizeAdSpend");
+export const generateSocialMediaPosts = notMigrated("generateSocialMediaPosts");
+export const analyzeWebsiteTraffic = notMigrated("analyzeWebsiteTraffic");
+export const recommendSEOImprovements = notMigrated("recommendSEOImprovements");
+export const monitorBrandMentions = notMigrated("monitorBrandMentions");
 
-export const generateAndEmailPDFs = base44.functions.generateAndEmailPDFs;
+/* =====================================================
+   EMAIL / DRIP / AUTOMATION
+   ===================================================== */
 
-export const monitorWebsiteChanges = base44.functions.monitorWebsiteChanges;
+export const sendMarketingEmails = notMigrated("sendMarketingEmails");
+export const trackEmailEngagement = notMigrated("trackEmailEngagement");
+export const segmentEmailLists = notMigrated("segmentEmailLists");
+export const personalizeEmailContent = notMigrated("personalizeEmailContent");
+export const scheduleEmailCampaigns = notMigrated("scheduleEmailCampaigns");
+export const generateEmailSubjectLines = notMigrated("generateEmailSubjectLines");
+export const analyzeEmailPerformance = notMigrated("analyzeEmailPerformance");
+export const suggestEmailImprovements = notMigrated("suggestEmailImprovements");
+export const manageUnsubscribes = notMigrated("manageUnsubscribes");
+export const cleanEmailLists = notMigrated("cleanEmailLists");
+export const monitorEmailDeliverability = notMigrated("monitorEmailDeliverability");
+export const generateEmailReports = notMigrated("generateEmailReports");
+export const optimizeEmailTiming = notMigrated("optimizeEmailTiming");
+export const integrateCRMEmail = notMigrated("integrateCRMEmail");
+export const automateEmailResponses = notMigrated("automateEmailResponses");
+export const trackEmailConversions = notMigrated("trackEmailConversions");
 
-export const sendProjectNotification = base44.functions.sendProjectNotification;
+/* =====================================================
+   DRIP CAMPAIGNS
+   ===================================================== */
 
-export const scheduleNotifications = base44.functions.scheduleNotifications;
-
-export const createTestAccounts = base44.functions.createTestAccounts;
-
-export const stripeWebhook = base44.functions.stripeWebhook;
-
-export const createStripeInvoice = base44.functions.createStripeInvoice;
-
-export const checkOverdueInvoices = base44.functions.checkOverdueInvoices;
-
-export const importContactToProspect = base44.functions.importContactToProspect;
-
-export const generateBlogContent = base44.functions.generateBlogContent;
-
-export const extractPageContent = base44.functions.extractPageContent;
-
-export const sendClientInvite = base44.functions.sendClientInvite;
-
-export const shareProposal = base44.functions.shareProposal;
-
-export const calculateLeadScore = base44.functions.calculateLeadScore;
-
+export const createDripCampaigns = notMigrated("createDripCampaigns");
+export const analyzeDripPerformance = notMigrated("analyzeDripPerformance");
+export const suggestDripImprovements = notMigrated("suggestDripImprovements");
+export const manageDripSubscriptions = notMigrated("manageDripSubscriptions");
+export const optimizeDripContent = notMigrated("optimizeDripContent");
+export const scheduleDripEmails = notMigrated("scheduleDripEmails");
+export const generateDripReports = notMigrated("generateDripReports");
+export const trackDripEngagement = notMigrated("trackDripEngagement");
+export const personalizeDripContent = notMigrated("personalizeDripContent");
+export const segmentDripLists = notMigrated("segmentDripLists");
+export const monitorDripDeliverability = notMigrated("monitorDripDeliverability");
+export const optimizeDripTiming = notMigrated("optimizeDripTiming");
+export const integrateCRMDrip = notMigrated("integrateCRMDrip");
+export const automateDripResponses = notMigrated("automateDripResponses");
+export const trackDripConversions = notMigrated("trackDripConversions");

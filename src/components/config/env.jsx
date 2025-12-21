@@ -15,14 +15,14 @@ NODE_ENV=production
 # ===========================================
 BASE44_APP_ID=${BASE44_APP_ID}
 VITE_BASE_URL=https://pacificengineeringsf.com
-VITE_API_BASE_URL=
+VITE_API_BASE_URL=https://api.pacificengineeringsf.com
 
 # ===========================================
 # Domain Configuration
 # ===========================================
 VITE_MAIN_DOMAIN=pacificengineeringsf.com
-VITE_INTERNAL_SUBDOMAIN=internalportal
-VITE_CLIENT_SUBDOMAIN=clientportal
+VITE_INTERNAL_SUBDOMAIN=internal
+VITE_CLIENT_SUBDOMAIN=portal
 
 # ===========================================
 # Stripe Integration (LIVE KEYS)
@@ -71,4 +71,4 @@ RATE_LIMIT_MAX_REQUESTS=100
 # ===========================================
 # CORS Configuration
 # ===========================================
-CORS_ALLOWED_ORIGINS=https://pacificengineeringsf.com,https://internalportal.pacificengineeringsf.com,https://clientportal.pacificengineeringsf.com
+CORS_ALLOWED_ORIGINS=https://pacificengineeringsf.com,https://internal.pacificengineeringsf.com,https://portal.pacificengineeringsf.com

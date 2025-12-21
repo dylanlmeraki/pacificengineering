@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, XCircle, FileSignature, Loader2 } from "lucide-react";
-import SignaturePad from "../proposals/SignaturePad";
+import SignaturePad from "@/components/proposals/SignaturePad";
 
 export default function DocumentApprovalFlow({ approval, user, onComplete }) {
   const [action, setAction] = useState(null);

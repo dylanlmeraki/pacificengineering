@@ -1,8 +1,12 @@
-import { createClient } from '@base44/sdk';
-// import { getAccessToken } from '@base44/sdk/utils/auth-utils';
+// src/api/base44Client.js
 
-// Create a client with authentication required
-export const base44 = createClient({
-  appId: "68eb69c51ce08e4c9fdca015", 
-  requiresAuth: true // Ensure authentication is required for all operations
-});
+console.warn(
+  "[base44Client] Base44 SDK is no longer used. Migrate to the internal API (src/api/httpClient.js)."
+);
+
+export const base44 = {
+  entities: {},
+  integrations: {
+    Core: {},
+  },
+};

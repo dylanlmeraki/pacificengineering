@@ -1,7 +1,7 @@
 // Subdomain detection and routing helpers
 
-const INTERNAL_SUBDOMAIN = "internalportal";
-const CLIENT_SUBDOMAIN = "clientportal";
+const INTERNAL_SUBDOMAIN = "internal.pacificengineeringsf.com";
+const CLIENT_SUBDOMAIN = "portal.pacificengineeringsf.com";
 const MAIN_DOMAIN = "pacificengineeringsf.com";
 
 /**

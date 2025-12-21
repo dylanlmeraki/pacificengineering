@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { X, Download, Send, CheckCircle, Mail, PenTool, XCircle, Clock, AlertCircle, Loader2 } from "lucide-react";
 import { format } from "date-fns";
-import SignaturePad from "./SignaturePad";
+import SignaturePad from "@/components/proposals/SignaturePad";
 
 export default function ProposalViewModal({ proposal, onClose, onUpdate }) {
   const [isSending, setIsSending] = useState(false);
